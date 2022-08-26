@@ -14,6 +14,7 @@ connection.connect((err) => {
   if (err) throw err;
   console.log("Connexion DB: OK");
 });
+const PORT =  process.env.PORT || 6001 ;
 
 // Middelware pour conversion
 
@@ -89,6 +90,6 @@ app.patch("/voter", (req, reponse) => {
   }
 });
 
-app.listen(8080, () => {
+app.listen(PORT, () => {
   console.log("Serveur à l'écoute");
 });
