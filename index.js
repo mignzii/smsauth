@@ -58,6 +58,7 @@ app.patch("/voter", (req, reponse) => {
   let voixpresirelation = req.body.REX;
   let voixpresipeda = req.body.Peda;
   let voixSg = req.body.SG;
+  let voixSag=req.body.SAG;
   let voixVP= req.body.VP;
   let VoixPresiculturel = req.body.CULTUREL;
   let voixtresorier= req.body.Treso;
@@ -69,7 +70,7 @@ app.patch("/voter", (req, reponse) => {
         else if (resulta.length == 0) {
           reponse.status(200).json({message:"Ce mail n'est pas valide pour voter"});
         } else {
-          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voixpresiorga} OR id=${voixpresirelation} OR id=${voixpresipeda} OR id=${voixSg} OR id=${voixVP} OR id=${VoixPresiculturel} OR id=${voixtresorier}`,(err, result) => {
+          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voixpresiorga} OR id=${voixpresirelation} OR id=${voixpresipeda} OR id=${voixSg} OR id=${voixSag} OR id=${voixVP} OR id=${VoixPresiculturel} OR id=${voixtresorier}`,(err, result) => {
               if (err) console.log(err);
               else {
                 console.log(resulta[0].mail)
