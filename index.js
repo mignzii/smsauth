@@ -30,6 +30,8 @@ app.get("/participant", (req, res) => {
   });
 });
 
+
+
 app.post("/mail", (req, res) => {
   let emailuser = req.body.mail;
   console.log(emailuser);
@@ -89,6 +91,13 @@ app.patch("/voter", (req, reponse) => {
     reponse.status(400).json({message:"cet email ne vote pas "});
   }
 });
+app.get('/allvotant', (req,res)=>{
+  connection.query('SELECT COUNT(*) FROM electeur WHERE nbrefois=1',(err,result)=>{
+    if(!err){
+      res.send(result)
+    }else res.send(false)
+  })
+})
 
 app.listen(PORT, () => {
   console.log("Serveur à l'écoute");
