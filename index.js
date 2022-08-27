@@ -92,7 +92,7 @@ app.patch("/voter", (req, reponse) => {
   }
 });
 app.get('/allvotant', (req,res)=>{
-  connection.query('SELECT COUNT(*) FROM electeur WHERE nbrefois=1',(err,result)=>{
+  connection.query('SELECT COUNT(*) as votant FROM electeur WHERE nbrefois=1',(err,result)=>{
     if(!err){
       res.send(result)
     }else res.send(false)
