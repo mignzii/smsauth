@@ -67,7 +67,7 @@ app.post("/testmail", (req, res) => {
 
           // l'email est valide , on crée alors un mot de passe `
           // Generate a random password of 10 characters
-        const password = "Passer";    
+        const password = "passer";    
           const msg = {
             to: emailuser, // Change to your recipient
             from: 'mignzii99@gmail.com', // Change to your verified sender
@@ -163,14 +163,3 @@ app.get('/allvotant', (req,res)=>{
 app.listen(PORT, () => {
   console.log("Serveur à l'écoute");
 });
-
-app.post("/enregiste",(req,res)=>{
-  let values = [
-    [req.body.mail,req.body.password 
-     ]
-]
-  connection.query("INSERT INTO electeur (mail,password,)  VALUES ? ", [values], (err)=>{
-    if(err) console.log(err)
-    else res.send(true)
-})
-})
