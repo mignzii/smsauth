@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 var cors = require("cors");
 var mysql = require("mysql");
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey("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")
+
 
 // Connection a la base de donée
 var connection = mysql.createConnection({
@@ -18,6 +21,23 @@ const PORT =  process.env.PORT || 6001 ;
 
 // Middelware pour conversion
 
+
+//Generer un mot de passe aleatoire
+const possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567';
+
+// Generate a random password of specified length
+function generateRandomPassword(length) {
+  let password = '';
+
+  for (let i = 0; i < length; i++) {
+    // Get a random character from the possibleCharacters string
+    // and add it to the password string
+    password += possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
+  }
+
+  return password;
+}
+
 app.use(express.json());
 app.use(cors());
 
@@ -30,9 +50,7 @@ app.get("/participant", (req, res) => {
   });
 });
 
-
-
-app.post("/mail", (req, res) => {
+app.post("/testmail", (req, res) => {
   let emailuser = req.body.mail;
   console.log(emailuser);
   if (emailuser == null) {
@@ -46,22 +64,64 @@ app.post("/mail", (req, res) => {
         if (result.length == 0) {
           res.status(200).send("false");
         } else {
+
+          // l'email est valide , on crée alors un mot de passe `
+          // Generate a random password of 10 characters
+        const password = generateRandomPassword(10);    
+          const msg = {
+            to: emailuser, // Change to your recipient
+            from: 'mignzii99@gmail.com', // Change to your verified sender
+            subject: 'Mot de passe',
+            text: 'Votre mot de passe est :' + password,
+            html: 'Votre mot de passe est :' + password,
+          }
+          sgMail
+            .send(msg)
+            .then(() => {
+              console.log('Email sent')
+              connection.query(`UPDATE electeur SET password="${password}" where mail="${emailuser}"`,(err, result) =>{
+                if(err) console.log(err)
+                else {
+                  res.status(200).send("true")
+                }
+                
+              })
+              
+            })
+            .catch((error) => {
+              console.error(error)
+            })
+
+        }
+      }
+    );
+  }
+});
+
+app.post("/password", (req, res) => {
+  let passworduser = req.body.password;
+  console.log(passworduser);
+  if (passworduser == null) {
+    res.status(200).send("false");
+  } else {
+    connection.query(
+      "Select * from electeur  WHERE password=? AND nbrefois=0",
+      passworduser,
+      (err, result) => {
+        if (err) console.log(err);
+        if (result.length == 0) {
+          res.status(200).send("false");
+        } else {
+          // le mot de passe  est valide 
           res.status(200).send("true");
         }
       }
     );
   }
 });
+
 app.patch("/voter", (req, reponse) => {
   let voixpresi = req.body.choixpresi;
-  let voixpresiorga = req.body.choixpresiorga;
-  let voixpresirelation = req.body.REX;
-  let voixpresipeda = req.body.Peda;
-  let voixSg = req.body.SG;
-  let voixSag=req.body.SAG;
-  let voixVP= req.body.VP;
-  let VoixPresiculturel = req.body.CULTUREL;
-  let voixtresorier= req.body.Treso;
   let emailvotant = req.body.emailelecteur;
   if (emailvotant != null) {
     connection.query("Select * from electeur  WHERE mail=? AND nbrefois=0",emailvotant,
@@ -70,7 +130,7 @@ app.patch("/voter", (req, reponse) => {
         else if (resulta.length == 0) {
           reponse.status(200).json({message:"Ce mail n'est pas valide pour voter"});
         } else {
-          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voixpresiorga} OR id=${voixpresirelation} OR id=${voixpresipeda} OR id=${voixSg} OR id=${voixSag} OR id=${voixVP} OR id=${VoixPresiculturel} OR id=${voixtresorier}`,(err, result) => {
+          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} `,(err, result) => {
               if (err) console.log(err);
               else {
                 console.log(resulta[0].mail)
