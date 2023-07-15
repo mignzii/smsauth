@@ -89,7 +89,7 @@ app.post("/testmail", (req, res) => {
             const mailOptions = {
              
               from: ' ibrahimaminianediouf@esp.sn',
-              to: 'mignzii99@gmail.com',
+              to: emailuser,
               subject: 'election',
               text: 'mot de passe ' +password,
             };
