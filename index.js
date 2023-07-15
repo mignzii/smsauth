@@ -64,33 +64,7 @@ app.post("/testmail", (req, res) => {
         if (result.length == 0) {
           res.status(200).send("false");
         } else {
-
-          // l'email est valide , on crée alors un mot de passe `
-          // Generate a random password of 10 characters
-        const password = "passer";    
-          const msg = {
-            to: emailuser, // Change to your recipient
-            from: 'mignzii99@gmail.com', // Change to your verified sender
-            subject: 'Mot de passe',
-            text: 'Votre mot de passe est :' + password,
-            html: 'Votre mot de passe est :' + password,
-          }
-          sgMail
-            .send(msg)
-            .then(() => {
-              console.log('Email sent')
-              connection.query(`UPDATE electeur SET password="${password}" where mail="${emailuser}"`,(err, result) =>{
-                if(err) console.log(err)
-                else {
-                  res.status(200).send("true")
-                }
-                
-              })
-              
-            })
-            .catch((error) => {
-              console.error(error)
-            })
+           res.status(200).send("true")
 
         }
       }
@@ -122,7 +96,9 @@ app.post("/password", (req, res) => {
 
 app.patch("/voter", (req, reponse) => {
   let voixpresi = req.body.choixpresi;
+  let voixpresicompte = req.body.choixpresicompte;
   let emailvotant = req.body.emailelecteur;
+  console.log(voixpresicompte)
   if (emailvotant != null) {
     connection.query("Select * from electeur  WHERE mail=? AND nbrefois=0",emailvotant,
       (err, resulta) => {
@@ -130,7 +106,7 @@ app.patch("/voter", (req, reponse) => {
         else if (resulta.length == 0) {
           reponse.status(200).json({message:"Ce mail n'est pas valide pour voter"});
         } else {
-          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} `,(err, result) => {
+          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voixpresicompte}  `,(err, result) => {
               if (err) console.log(err);
               else {
                 console.log(resulta[0].mail)
