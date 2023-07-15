@@ -2,9 +2,19 @@ const express = require("express");
 const app = express();
 var cors = require("cors");
 var mysql = require("mysql");
+const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey("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")
 
+
+// Configure Nodemailer with your email credentials
+const transporter = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: 'ibrahimaminianediouf@esp.sn',
+    pass: 'ywjprnmqiauntcft',
+  },
+});
 
 // Connection a la base de donée
 var connection = mysql.createConnection({
@@ -57,15 +67,49 @@ app.post("/testmail", (req, res) => {
     res.status(200).send("false");
   } else {
     connection.query(
-      "Select * from electeur  WHERE mail=? AND nbrefois=0",
+      "Select * from electeur WHERE mail=? AND nbrefois=0",
       emailuser,
       (err, result) => {
         if (err) console.log(err);
         if (result.length == 0) {
+          console.log(result)
+          console.log("la")
           res.status(200).send("false");
         } else {
-           res.status(200).send("true")
-
+          console.log(result[0].password)
+          // l'email est valide , on crée alors un mot de passe `
+          // Generate a random password of 10 characters
+          if(result[0].password !='') {
+            console.log(result.password)
+            res.status(200).send("true")
+          } else {
+            console.log(result[0].password)
+            console.log("Hello")
+            const password = generateRandomPassword(6)   
+            const mailOptions = {
+             
+              from: ' ibrahimaminianediouf@esp.sn',
+              to: 'mignzii99@gmail.com',
+              subject: 'election',
+              text: 'mot de passe ' +password,
+            };
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.log(error);
+                res.status(500).send('Error sending email');
+              } else {
+                console.log('Email sent: ' + info.response);
+                connection.query(`UPDATE electeur SET password="${password}" where mail="${emailuser}"`,(err, result) =>{
+                  if(err) console.log(err)
+                  else {
+                    res.status(200).send("true")
+                  }
+                  
+                })
+              }
+            });
+          }
+       
         }
       }
     );
@@ -96,9 +140,8 @@ app.post("/password", (req, res) => {
 
 app.patch("/voter", (req, reponse) => {
   let voixpresi = req.body.choixpresi;
-  let voixpresicompte = req.body.choixpresicompte;
+  let voicomp=req.body.choixpresicompte;
   let emailvotant = req.body.emailelecteur;
-  console.log(voixpresicompte)
   if (emailvotant != null) {
     connection.query("Select * from electeur  WHERE mail=? AND nbrefois=0",emailvotant,
       (err, resulta) => {
@@ -106,7 +149,7 @@ app.patch("/voter", (req, reponse) => {
         else if (resulta.length == 0) {
           reponse.status(200).json({message:"Ce mail n'est pas valide pour voter"});
         } else {
-          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voixpresicompte}  `,(err, result) => {
+          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voicomp}  `,(err, result) => {
               if (err) console.log(err);
               else {
                 console.log(resulta[0].mail)
