@@ -5,10 +5,7 @@ var mysql = require("mysql");
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 
-const accountSid = 'AC9309cb851c918ba44a0323ec10a95da1';
-const authToken = '9746a0b2300463be82fc1890b62e39af';
-TWILIO_SERVICE_SID = "VAb4dc3daac06215ea8bc40a82afcd7184"
-const client = twilio(accountSid, authToken);
+
 
 // Configure Nodemailer with your email credentials
 const transporter = nodemailer.createTransport({
