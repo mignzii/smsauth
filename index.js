@@ -3,9 +3,12 @@ const app = express();
 var cors = require("cors");
 var mysql = require("mysql");
 const nodemailer = require('nodemailer');
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey("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")
+const twilio = require('twilio');
 
+const accountSid = 'AC9309cb851c918ba44a0323ec10a95da1';
+const authToken = '9746a0b2300463be82fc1890b62e39af';
+TWILIO_SERVICE_SID = "VAb4dc3daac06215ea8bc40a82afcd7184"
+const client = twilio(accountSid, authToken);
 
 // Configure Nodemailer with your email credentials
 const transporter = nodemailer.createTransport({
@@ -34,6 +37,7 @@ const PORT =  process.env.PORT || 6001 ;
 
 //Generer un mot de passe aleatoire
 const possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567';
+const CodepossibleCaracter = '0123456789';
 
 // Generate a random password of specified length
 function generateRandomPassword(length) {
@@ -51,14 +55,47 @@ function generateRandomPassword(length) {
 app.use(express.json());
 app.use(cors());
 
-app.get("/participant", (req, res) => {
-  connection.query("Select * from candidat ", (err, result) => {
-    if (err) console.log(err);
-    else {
-      res.status(200).json(result);
-    }
-  });
+// Pour envoyer sms avec twilio 
+app.post('/sendSMS', async (req, res) => {
+  const { countrycode, phoneNumber } = req.body;
+  console.log(countrycode)
+  console.log(phoneNumber)
+  console.log(`+${countrycode}${phoneNumber}`)
+  try {
+    const otpResponse = await client.verify.services(TWILIO_SERVICE_SID)
+      .verifications.create({
+        to: `+${countrycode}${phoneNumber}`,
+        channel: 'sms'
+      });
+    res.status(200).send(`OTP envoyé avec succès ! : ${JSON.stringify(otpResponse)}`);
+  } catch (error) {
+    res.status(error?.status || 400).send(error?.message || 'Quelque chose ne fonctionne pas');
+  }
 });
+
+// Pour verifier le code 
+app.post('/verifyOTP', async (req, res) => {
+  const { countrycode, phoneNumber, code } = req.body;
+  try {
+    const verificationCheck = await client.verify.services(TWILIO_SERVICE_SID)
+      .verificationChecks.create({
+        to: `+${countrycode}${phoneNumber}`,
+        code: code
+      });
+      
+    if (verificationCheck.status === 'approved') {
+      // Le code OTP est valide
+      res.status(200).send('Code OTP valide');
+    } else {
+      // Le code OTP est invalide
+      res.status(400).send('Code OTP invalide');
+    }
+  } catch (error) {
+    res.status(error?.status || 400).send(error?.message || 'Quelque chose ne fonctionne pas');
+  }
+});
+
+// verifier si l'utilisateur est dans la base de donéée 
 
 app.post("/testmail", (req, res) => {
   let emailuser = req.body.mail;
@@ -115,7 +152,7 @@ app.post("/testmail", (req, res) => {
     );
   }
 });
-
+ // Verifier le mot de passe 
 app.post("/password", (req, res) => {
   let passworduser = req.body.password;
   console.log(passworduser);
@@ -138,46 +175,6 @@ app.post("/password", (req, res) => {
   }
 });
 
-app.patch("/voter", (req, reponse) => {
-  let voixpresi = req.body.choixpresi;
-  let voicomp=req.body.choixpresicompte;
-  let emailvotant = req.body.emailelecteur;
-  if (emailvotant != null) {
-    connection.query("Select * from electeur  WHERE mail=? AND nbrefois=0",emailvotant,
-      (err, resulta) => {
-        if (err) console.log(err);
-        else if (resulta.length == 0) {
-          reponse.status(200).json({message:"Ce mail n'est pas valide pour voter"});
-        } else {
-          connection.query(`UPDATE candidat SET voix=voix+1 where id=${voixpresi} OR id=${voicomp}  `,(err, result) => {
-              if (err) console.log(err);
-              else {
-                console.log(resulta[0].mail)
-                connection.query(`UPDATE electeur SET nbrefois=1 where mail="${resulta[0].mail}"`,(err,resultat)=>{
-                    if(!err) {
-                        reponse.status(200).json({message:'Bien mise a jour' }  )
-                    }
-                    else console.log(err)
-                    
-                })
-
-              }
-            }
-          );
-        }
-      }
-    );
-  } else {
-    reponse.status(400).json({message:"cet email ne vote pas "});
-  }
-});
-app.get('/allvotant', (req,res)=>{
-  connection.query('SELECT COUNT(*) as votant FROM electeur WHERE nbrefois=1',(err,result)=>{
-    if(!err){
-      res.send(result)
-    }else res.send(false)
-  })
-})
 
 app.listen(PORT, () => {
   console.log("Serveur à l'écoute");
